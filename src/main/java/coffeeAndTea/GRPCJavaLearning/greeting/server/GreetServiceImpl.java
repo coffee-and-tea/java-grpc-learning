@@ -1,11 +1,15 @@
 package coffeeAndTea.GRPCJavaLearning.greeting.server;
 
+import coffeeAndTea.GRPCJavaLearning.greet.GreetEveryoneRequest;
+import coffeeAndTea.GRPCJavaLearning.greet.GreetEveryoneResponse;
 import coffeeAndTea.GRPCJavaLearning.greet.GreetManyTimesRequest;
 import coffeeAndTea.GRPCJavaLearning.greet.GreetManyTimesResponse;
 import coffeeAndTea.GRPCJavaLearning.greet.GreetRequest;
 import coffeeAndTea.GRPCJavaLearning.greet.GreetResponse;
 import coffeeAndTea.GRPCJavaLearning.greet.GreetServiceGrpc;
 import coffeeAndTea.GRPCJavaLearning.greet.Greeting;
+import coffeeAndTea.GRPCJavaLearning.greet.LongGreetRequest;
+import coffeeAndTea.GRPCJavaLearning.greet.LongGreetResponse;
 import io.grpc.stub.StreamObserver;
 
 public class GreetServiceImpl extends GreetServiceGrpc.GreetServiceImplBase {
@@ -47,5 +51,63 @@ public class GreetServiceImpl extends GreetServiceGrpc.GreetServiceImplBase {
         }finally {
             responseObserver.onCompleted();
         }
+    }
+
+    @Override
+    public StreamObserver<LongGreetRequest> longGreet(StreamObserver<LongGreetResponse> responseObserver) {
+
+
+        StreamObserver<LongGreetRequest> requestObserver = new StreamObserver<LongGreetRequest>() {
+
+            String result = "";
+
+            @Override
+            public void onNext(LongGreetRequest value) {
+                // client sends a message
+                result += ". Hello " + value.getGreeting().getFirstName();
+            }
+
+            @Override
+            public void onError(Throwable t) {
+                // client sends an error
+
+            }
+
+            @Override
+            public void onCompleted() {
+                // client is done
+                responseObserver.onNext(LongGreetResponse.newBuilder().setResult(result).build());
+                responseObserver.onCompleted();
+            }
+        };
+
+        return requestObserver;
+    }
+
+    @Override
+    public StreamObserver<GreetEveryoneRequest> greetEveryone(StreamObserver<GreetEveryoneResponse> responseObserver) {
+        StreamObserver<GreetEveryoneRequest> requestStreamObserve =
+                new StreamObserver<GreetEveryoneRequest>() {
+                    @Override
+                    public void onNext(GreetEveryoneRequest value) {
+                        responseObserver.onNext(
+                                GreetEveryoneResponse.newBuilder()
+                                        .setResult("Hello " + value.getGreeting().getFirstName())
+                                        .build()
+                        );
+                    }
+
+                    @Override
+                    public void onError(Throwable t) {
+
+                    }
+
+                    @Override
+                    public void onCompleted() {
+                        responseObserver.onCompleted();
+                    }
+                };
+
+        return requestStreamObserve;
     }
 }
