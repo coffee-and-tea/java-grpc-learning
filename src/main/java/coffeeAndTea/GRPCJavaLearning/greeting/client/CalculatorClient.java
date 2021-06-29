@@ -3,6 +3,8 @@ package coffeeAndTea.GRPCJavaLearning.greeting.client;
 import coffeeAndTea.GRPCJavaLearning.calculator.AverageRequest;
 import coffeeAndTea.GRPCJavaLearning.calculator.AverageResponse;
 import coffeeAndTea.GRPCJavaLearning.calculator.CalculatorServiceGrpc;
+import coffeeAndTea.GRPCJavaLearning.calculator.MaxRequest;
+import coffeeAndTea.GRPCJavaLearning.calculator.MaxResponse;
 import coffeeAndTea.GRPCJavaLearning.calculator.PrimeNumberDecompositionRequest;
 import coffeeAndTea.GRPCJavaLearning.calculator.SumRequest;
 import coffeeAndTea.GRPCJavaLearning.calculator.SumResponse;
@@ -24,6 +26,54 @@ public class CalculatorClient {
                         .build();
         System.out.println("Creating stub");
 
+        serverStreaming(channel);
+
+        CalculatorServiceGrpc.CalculatorServiceStub stub =
+                CalculatorServiceGrpc.newStub(channel);
+
+        clientStreaming(stub);
+
+        biDirectionStreaming(stub);
+        channel.shutdown();
+    }
+
+    private static void biDirectionStreaming(CalculatorServiceGrpc.CalculatorServiceStub stub) {
+
+        CountDownLatch latch = new CountDownLatch(1);
+
+        StreamObserver<MaxRequest> requestStreamObserver = stub.findMax(new StreamObserver<MaxResponse>() {
+            @Override
+            public void onNext(MaxResponse value) {
+                System.out.println("New max found: " + value.getResponse());
+            }
+
+            @Override
+            public void onError(Throwable t) {
+
+            }
+
+            @Override
+            public void onCompleted() {
+                System.out.println("Server completed");
+                latch.countDown();
+            }
+        });
+
+        for(int i = 0; i < 10000; i++) {
+            System.out.println("Sending: " + i);
+            requestStreamObserver.onNext(MaxRequest.newBuilder().setRequest(i).build());
+        }
+
+        requestStreamObserver.onCompleted();
+
+        try {
+            latch.await(30L, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void serverStreaming(ManagedChannel channel) {
         CalculatorServiceGrpc.CalculatorServiceBlockingStub
                 calculatorBlockingClient = CalculatorServiceGrpc.newBlockingStub(channel);
 
@@ -38,10 +88,9 @@ public class CalculatorClient {
                 primeNumberDecompositionResponse ->
                         System.out.println(primeNumberDecompositionResponse.getPrimeFactor())
         );
+    }
 
-        CalculatorServiceGrpc.CalculatorServiceStub stub =
-                CalculatorServiceGrpc.newStub(channel);
-
+    private static void clientStreaming(CalculatorServiceGrpc.CalculatorServiceStub stub) {
         CountDownLatch latch = new CountDownLatch(1);
 
         StreamObserver<AverageRequest> requestStreamObserver = stub.average(new StreamObserver<AverageResponse>() {
@@ -74,6 +123,5 @@ public class CalculatorClient {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        channel.shutdown();
     }
 }

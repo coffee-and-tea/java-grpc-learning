@@ -31,6 +31,14 @@ message AverageResponse {
   int32 response_number = 1;
 }
 
+message MaxRequest {
+  int32 request = 1;
+}
+
+message MaxResponse {
+  int32 response = 1;
+}
+
 service CalculatorService {
   rpc Sum(SumRequest) returns (SumResponse) {};
 
@@ -38,4 +46,6 @@ service CalculatorService {
       returns (stream PrimeNumberDecompositionResponse) {};
 
   rpc average(stream AverageRequest) returns (AverageResponse) {};
+
+  rpc findMax(stream MaxRequest) returns (stream MaxResponse) {};
 }

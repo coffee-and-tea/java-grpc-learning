@@ -14,6 +14,7 @@ import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.stub.StreamObserver;
 
+import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -68,27 +69,17 @@ public class GreetingClient {
             }
         });
 
-        requestStreamObserver.onNext(
-                GreetEveryoneRequest.newBuilder().setGreeting(
-                        Greeting.newBuilder().setFirstName("Wei").build()
-                ).build()
+        Arrays.asList("Wei", "Wei1", "Wei2", "Wei3").forEach(
+                name -> {
+                    System.out.println("Sending " + name);
+                    requestStreamObserver.onNext(
+                            GreetEveryoneRequest.newBuilder().setGreeting(
+                                    Greeting.newBuilder().setFirstName(name).build()
+                            ).build()
+                    );
+                }
         );
 
-        requestStreamObserver.onNext(
-                GreetEveryoneRequest.newBuilder().setGreeting(
-                        Greeting.newBuilder().setFirstName("Wei1").build()
-                ).build()
-        );
-        requestStreamObserver.onNext(
-                GreetEveryoneRequest.newBuilder().setGreeting(
-                        Greeting.newBuilder().setFirstName("Wei2").build()
-                ).build()
-        );
-        requestStreamObserver.onNext(
-                GreetEveryoneRequest.newBuilder().setGreeting(
-                        Greeting.newBuilder().setFirstName("Wei3").build()
-                ).build()
-        );
 
         requestStreamObserver.onCompleted();
 

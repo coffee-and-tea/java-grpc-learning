@@ -3,6 +3,8 @@ package coffeeAndTea.GRPCJavaLearning.greeting.server;
 import coffeeAndTea.GRPCJavaLearning.calculator.AverageRequest;
 import coffeeAndTea.GRPCJavaLearning.calculator.AverageResponse;
 import coffeeAndTea.GRPCJavaLearning.calculator.CalculatorServiceGrpc;
+import coffeeAndTea.GRPCJavaLearning.calculator.MaxRequest;
+import coffeeAndTea.GRPCJavaLearning.calculator.MaxResponse;
 import coffeeAndTea.GRPCJavaLearning.calculator.PrimeNumberDecompositionRequest;
 import coffeeAndTea.GRPCJavaLearning.calculator.PrimeNumberDecompositionResponse;
 import coffeeAndTea.GRPCJavaLearning.calculator.SumRequest;
@@ -71,5 +73,30 @@ public class CalculatorServerImpl extends CalculatorServiceGrpc.CalculatorServic
                     }
                 };
         return averageRequestStreamObserver;
+    }
+
+    @Override
+    public StreamObserver<MaxRequest> findMax(StreamObserver<MaxResponse> responseObserver) {
+        return new StreamObserver<MaxRequest>() {
+            private int currentMax = Integer.MIN_VALUE;
+
+            @Override
+            public void onNext(MaxRequest value) {
+                if(currentMax < value.getRequest()) {
+                    currentMax = value.getRequest();
+                }
+                responseObserver.onNext(MaxResponse.newBuilder().setResponse(currentMax).build());
+            }
+
+            @Override
+            public void onError(Throwable t) {
+
+            }
+
+            @Override
+            public void onCompleted() {
+                responseObserver.onCompleted();
+            }
+        };
     }
 }
