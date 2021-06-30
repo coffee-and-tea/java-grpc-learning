@@ -1,17 +1,19 @@
 package coffeeAndTea.GRPCJavaLearning.greeting.client;
 
-import coffeeAndTea.GRPCJavaLearning.greet.Greet;
 import coffeeAndTea.GRPCJavaLearning.greet.GreetEveryoneRequest;
 import coffeeAndTea.GRPCJavaLearning.greet.GreetEveryoneResponse;
 import coffeeAndTea.GRPCJavaLearning.greet.GreetManyTimesRequest;
 import coffeeAndTea.GRPCJavaLearning.greet.GreetRequest;
 import coffeeAndTea.GRPCJavaLearning.greet.GreetResponse;
 import coffeeAndTea.GRPCJavaLearning.greet.GreetServiceGrpc;
+import coffeeAndTea.GRPCJavaLearning.greet.GreetWithDeadlineRequest;
+import coffeeAndTea.GRPCJavaLearning.greet.GreetWithDeadlineResponse;
 import coffeeAndTea.GRPCJavaLearning.greet.Greeting;
 import coffeeAndTea.GRPCJavaLearning.greet.LongGreetRequest;
 import coffeeAndTea.GRPCJavaLearning.greet.LongGreetResponse;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
 
 import java.util.Arrays;
@@ -38,9 +40,35 @@ public class GreetingClient {
 //        doUnaryCall(channel);
 //        doServerStreamingCall(channel);
 //        doClientStreamingCall(channel);
-        doBiDiStreamingCall(channel);
+//        doBiDiStreamingCall(channel);
+        greetWithDeadline(channel);
         System.out.println("Shutting down channel");
         channel.shutdown();
+    }
+
+    private void greetWithDeadline(ManagedChannel channel) {
+        GreetServiceGrpc.GreetServiceBlockingStub stub =
+                GreetServiceGrpc.newBlockingStub(channel);
+        try {
+            GreetWithDeadlineResponse response = stub.withDeadlineAfter(1000L, TimeUnit.MILLISECONDS).greetWithDeadline(
+                    GreetWithDeadlineRequest.newBuilder().setGreeting(
+                            Greeting.newBuilder().setFirstName("Wei").build()
+                    ).build()
+            );
+
+            System.out.println(response.getResponse());
+
+
+            GreetWithDeadlineResponse response2 = stub.withDeadlineAfter(300L, TimeUnit.MILLISECONDS).greetWithDeadline(
+                    GreetWithDeadlineRequest.newBuilder().setGreeting(
+                            Greeting.newBuilder().setFirstName("Wei2").build()
+                    ).build()
+            );
+
+            System.out.println(response2.getResponse());
+        } catch (StatusRuntimeException e) {
+            e.printStackTrace();
+        }
     }
 
     private void doBiDiStreamingCall(ManagedChannel channel) {
@@ -97,24 +125,24 @@ public class GreetingClient {
 
         StreamObserver<LongGreetRequest> requestStreamObserver =
                 greetClient.longGreet(new StreamObserver<LongGreetResponse>() {
-            @Override
-            public void onNext(LongGreetResponse value) {
-                // response from server
-                System.out.println("Received response from server\n" + value.getResult());
-            }
+                    @Override
+                    public void onNext(LongGreetResponse value) {
+                        // response from server
+                        System.out.println("Received response from server\n" + value.getResult());
+                    }
 
-            @Override
-            public void onError(Throwable t) {
-                // error from server
-            }
+                    @Override
+                    public void onError(Throwable t) {
+                        // error from server
+                    }
 
-            @Override
-            public void onCompleted() {
-                // server sends done
-                System.out.println("Server completed");
-                latch.countDown();
-            }
-        });
+                    @Override
+                    public void onCompleted() {
+                        // server sends done
+                        System.out.println("Server completed");
+                        latch.countDown();
+                    }
+                });
 
         requestStreamObserver.onNext(
                 LongGreetRequest.newBuilder()

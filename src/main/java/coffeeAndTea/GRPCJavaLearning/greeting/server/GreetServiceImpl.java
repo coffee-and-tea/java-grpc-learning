@@ -7,9 +7,12 @@ import coffeeAndTea.GRPCJavaLearning.greet.GreetManyTimesResponse;
 import coffeeAndTea.GRPCJavaLearning.greet.GreetRequest;
 import coffeeAndTea.GRPCJavaLearning.greet.GreetResponse;
 import coffeeAndTea.GRPCJavaLearning.greet.GreetServiceGrpc;
+import coffeeAndTea.GRPCJavaLearning.greet.GreetWithDeadlineRequest;
+import coffeeAndTea.GRPCJavaLearning.greet.GreetWithDeadlineResponse;
 import coffeeAndTea.GRPCJavaLearning.greet.Greeting;
 import coffeeAndTea.GRPCJavaLearning.greet.LongGreetRequest;
 import coffeeAndTea.GRPCJavaLearning.greet.LongGreetResponse;
+import io.grpc.Context;
 import io.grpc.stub.StreamObserver;
 
 public class GreetServiceImpl extends GreetServiceGrpc.GreetServiceImplBase {
@@ -48,7 +51,7 @@ public class GreetServiceImpl extends GreetServiceGrpc.GreetServiceImplBase {
             }
         } catch (InterruptedException e) {
             e.printStackTrace();
-        }finally {
+        } finally {
             responseObserver.onCompleted();
         }
     }
@@ -109,5 +112,27 @@ public class GreetServiceImpl extends GreetServiceGrpc.GreetServiceImplBase {
                 };
 
         return requestStreamObserve;
+    }
+
+    @Override
+    public void greetWithDeadline(GreetWithDeadlineRequest request, StreamObserver<GreetWithDeadlineResponse> responseObserver) {
+
+        Context current = Context.current();
+
+        try {
+
+            for (int i = 0; i < 3; i++) {
+                if (!current.isCancelled()) {
+                    Thread.sleep(100);
+                } else {
+                    return;
+                }
+            }
+            responseObserver.onNext(GreetWithDeadlineResponse.newBuilder()
+                    .setResponse("Hello " + request.getGreeting().getFirstName()).build());
+            responseObserver.onCompleted();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 }
