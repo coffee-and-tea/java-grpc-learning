@@ -7,8 +7,11 @@ import coffeeAndTea.GRPCJavaLearning.calculator.MaxRequest;
 import coffeeAndTea.GRPCJavaLearning.calculator.MaxResponse;
 import coffeeAndTea.GRPCJavaLearning.calculator.PrimeNumberDecompositionRequest;
 import coffeeAndTea.GRPCJavaLearning.calculator.PrimeNumberDecompositionResponse;
+import coffeeAndTea.GRPCJavaLearning.calculator.SquareRootRequest;
+import coffeeAndTea.GRPCJavaLearning.calculator.SquareRootResponse;
 import coffeeAndTea.GRPCJavaLearning.calculator.SumRequest;
 import coffeeAndTea.GRPCJavaLearning.calculator.SumResponse;
+import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 
 public class CalculatorServerImpl extends CalculatorServiceGrpc.CalculatorServiceImplBase {
@@ -82,7 +85,7 @@ public class CalculatorServerImpl extends CalculatorServiceGrpc.CalculatorServic
 
             @Override
             public void onNext(MaxRequest value) {
-                if(currentMax < value.getRequest()) {
+                if (currentMax < value.getRequest()) {
                     currentMax = value.getRequest();
                 }
                 responseObserver.onNext(MaxResponse.newBuilder().setResponse(currentMax).build());
@@ -98,5 +101,24 @@ public class CalculatorServerImpl extends CalculatorServiceGrpc.CalculatorServic
                 responseObserver.onCompleted();
             }
         };
+    }
+
+    @Override
+    public void squareRoot(SquareRootRequest request, StreamObserver<SquareRootResponse> responseObserver) {
+        int number = request.getRequest();
+
+        if (number >= 0) {
+            responseObserver.onNext(
+                SquareRootResponse.newBuilder().setSquareRoot(
+                        Math.sqrt(number)
+                ).build()
+            );
+        } else {
+            responseObserver.onError(
+                    Status.INVALID_ARGUMENT.withDescription("Not support imaginary number")
+                    .augmentDescription("Number received: " + number)
+                    .asRuntimeException()
+            );
+        }
     }
 }

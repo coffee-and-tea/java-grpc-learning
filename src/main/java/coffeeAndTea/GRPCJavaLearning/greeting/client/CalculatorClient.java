@@ -6,10 +6,11 @@ import coffeeAndTea.GRPCJavaLearning.calculator.CalculatorServiceGrpc;
 import coffeeAndTea.GRPCJavaLearning.calculator.MaxRequest;
 import coffeeAndTea.GRPCJavaLearning.calculator.MaxResponse;
 import coffeeAndTea.GRPCJavaLearning.calculator.PrimeNumberDecompositionRequest;
-import coffeeAndTea.GRPCJavaLearning.calculator.SumRequest;
-import coffeeAndTea.GRPCJavaLearning.calculator.SumResponse;
+import coffeeAndTea.GRPCJavaLearning.calculator.SquareRootRequest;
+import coffeeAndTea.GRPCJavaLearning.calculator.SquareRootResponse;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
 
 import java.util.concurrent.CountDownLatch;
@@ -26,15 +27,29 @@ public class CalculatorClient {
                         .build();
         System.out.println("Creating stub");
 
-        serverStreaming(channel);
+//        serverStreaming(channel);
+//
+//        CalculatorServiceGrpc.CalculatorServiceStub stub =
+//                CalculatorServiceGrpc.newStub(channel);
+//
+//        clientStreaming(stub);
+//
+//        biDirectionStreaming(stub);
 
-        CalculatorServiceGrpc.CalculatorServiceStub stub =
-                CalculatorServiceGrpc.newStub(channel);
-
-        clientStreaming(stub);
-
-        biDirectionStreaming(stub);
+        errorHandling(channel);
         channel.shutdown();
+    }
+
+    private static void errorHandling(ManagedChannel channel) {
+        CalculatorServiceGrpc.CalculatorServiceBlockingStub stub =
+                CalculatorServiceGrpc.newBlockingStub(channel);
+        try {
+            SquareRootResponse response = stub.squareRoot(
+                    SquareRootRequest.newBuilder().setRequest(-1).build()
+            );
+        }catch (StatusRuntimeException e) {
+            System.out.println(e);
+        }
     }
 
     private static void biDirectionStreaming(CalculatorServiceGrpc.CalculatorServiceStub stub) {
